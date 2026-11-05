@@ -22,26 +22,26 @@ const autenticar = require('./middleware/authMiddleware');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ========================================
-// RELACIONES ENTRE MODELOS
-// ========================================
-
 // CATEGORÍA - PRODUCTOS
 Categoria.hasMany(Producto, {
-    foreignKey: 'categoria_id'
+    foreignKey: 'categoria_id',
+    as: 'productos'
 });
 
 Producto.belongsTo(Categoria, {
-    foreignKey: 'categoria_id'
+    foreignKey: 'categoria_id',
+    as: 'categoria'
 });
 
 // PROVEEDOR - PRODUCTOS
 Proveedor.hasMany(Producto, {
-    foreignKey: 'proveedor_id'
+    foreignKey: 'proveedor_id',
+    as: 'productos'
 });
 
 Producto.belongsTo(Proveedor, {
-    foreignKey: 'proveedor_id'
+    foreignKey: 'proveedor_id',
+    as: 'proveedor'
 });
 
 // PRODUCTO - MOVIMIENTOS
@@ -108,11 +108,26 @@ app.post('/api/productos', autenticar(['Administrador', 'Almacenero']), async (r
 });
 
 // GET: Listar productos
+// GET: Listar productos con categoría y proveedor
 app.get('/api/productos', autenticar(['Administrador', 'Almacenero']), async (req, res) => {
     try {
-        const productos = await Producto.findAll();
+        const productos = await Producto.findAll({
+            include: [
+                {
+                    model: Categoria,
+                    as: 'categoria',
+                    attributes: ['id', 'nombre']
+                },
+                {
+                    model: Proveedor,
+                    as: 'proveedor',
+                    attributes: ['id', 'razon_social']
+                }
+            ]
+        });
 
         res.json(productos);
+
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
